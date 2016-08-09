@@ -1,0 +1,40 @@
+<launch>
+
+  <param name="/move_group/trajectory_execution/execution_duration_monitoring" value="false" />
+
+  <arg name="reactive" default="true" />
+  <arg name="rviz" default="true" />
+  <arg name="gui" default="true" />
+
+  <include file="$(find fanuc_lrmate200id_gazebo)/launch/lrmate200id_gazebo.launch">
+    <arg name="load_robot_model" value="false" />
+    <arg name="world_name" value="$(find fanuc_lrmate200id_gazebo_demo)/worlds/apc_pick.world" />
+    <arg name="gui" value="$(arg gui)" />
+  </include>
+
+  <arg name="INPUT_CLOUD" value="/kinect_shelf/depth_registered/points" />
+  <node name="octomap_server"
+          pkg="octomap_server" type="octomap_server_node">
+      <remap from="cloud_in" to="$(arg INPUT_CLOUD)" />  <!-- depth timestamp -->
+      <rosparam>
+        frame_id: world
+        resolution: 0.05
+        latch: false
+      </rosparam>
+    </node>
+
+  <param name="robot_description"
+         command="$(find xacro)/xacro.py $(find fanuc_lrmate200id_gazebo_demo)/urdf/lrmate200id_apc_pick.xacro" />
+
+  <include file="$(find fanuc_lrmate200id_moveit_config)/launch/moveit_planning_execution_gazebo.launch">
+    <arg name="rviz" value="false" />
+  </include>
+
+  <group if="$(arg rviz)">
+    <node name="rviz"
+          pkg="rviz" type="rviz"
+          args="-d $(find fanuc_lrmate200id_gazebo_demo)/rvizconfig/apc_pick.rviz">
+    </node>
+  </group>
+
+</launch>
